@@ -32,41 +32,42 @@ SettingsDep = Annotated[AppSettings, Depends(get_app_settings)]
 # ── adapter singletons ────────────────────────────────────────────────────────
 
 @lru_cache
-def _claude_client(settings: AppSettings = Depends(get_app_settings)) -> ClaudeClient:
-    return ClaudeClient(settings.anthropic)
+def _claude_client() -> ClaudeClient:
+    return ClaudeClient(get_settings().anthropic)
 
 
 @lru_cache
-def _gemini_client(settings: AppSettings = Depends(get_app_settings)) -> GeminiClient:
-    return GeminiClient(settings.gemini)
+def _gemini_client() -> GeminiClient:
+    return GeminiClient(get_settings().gemini)
 
 
 @lru_cache
-def _gemini_embedder(settings: AppSettings = Depends(get_app_settings)) -> GeminiEmbedder:
-    return GeminiEmbedder(settings.gemini)
+def _gemini_embedder() -> GeminiEmbedder:
+    return GeminiEmbedder(get_settings().gemini)
 
 
 @lru_cache
-def _pinecone_store(settings: AppSettings = Depends(get_app_settings)) -> PineconeStore:
-    return PineconeStore(settings.pinecone, dimension=settings.gemini.embed_dimensions)
+def _pinecone_store() -> PineconeStore:
+    s = get_settings()
+    return PineconeStore(s.pinecone, dimension=s.gemini.embed_dimensions)
 
 
-# ── FastAPI-compatible providers (not cached via lru_cache — FastAPI manages scope) ──
+# ── FastAPI-compatible providers ──────────────────────────────────────────────
 
-def get_claude_client(settings: SettingsDep) -> ClaudeClient:
-    return _claude_client(settings)
-
-
-def get_gemini_client(settings: SettingsDep) -> GeminiClient:
-    return _gemini_client(settings)
+def get_claude_client(settings: SettingsDep) -> ClaudeClient:  # noqa: ARG001
+    return _claude_client()
 
 
-def get_gemini_embedder(settings: SettingsDep) -> GeminiEmbedder:
-    return _gemini_embedder(settings)
+def get_gemini_client(settings: SettingsDep) -> GeminiClient:  # noqa: ARG001
+    return _gemini_client()
 
 
-def get_pinecone_store(settings: SettingsDep) -> PineconeStore:
-    return _pinecone_store(settings)
+def get_gemini_embedder(settings: SettingsDep) -> GeminiEmbedder:  # noqa: ARG001
+    return _gemini_embedder()
+
+
+def get_pinecone_store(settings: SettingsDep) -> PineconeStore:  # noqa: ARG001
+    return _pinecone_store()
 
 
 ClaudeClientDep  = Annotated[ClaudeClient,  Depends(get_claude_client)]
