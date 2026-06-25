@@ -82,6 +82,7 @@ class RetrievalSettings(BaseSettings):
 
     single_doc_top_k: int = 6
     cross_doc_top_k: int = 4
+    relevance_floor: float = 0.5
 
 
 class AppSettings(BaseSettings):
