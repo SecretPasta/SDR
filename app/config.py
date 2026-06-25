@@ -25,7 +25,7 @@ class GeminiSettings(BaseSettings):
     )
 
     api_key: SecretStr
-    chat_model: str = "gemini-2.5-flash"
+    chat_model: str = "gemini-3.5-flash"
     embed_model: str = "gemini-embedding-001"
     embed_dimensions: int = 768
 
