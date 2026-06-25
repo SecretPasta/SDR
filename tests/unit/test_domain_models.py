@@ -182,3 +182,19 @@ class TestChatAnswer:
     def test_citation_format_without_page(self) -> None:
         c = Citation(filename="doc.docx", section="3.1")
         assert c.format() == "doc.docx · §3.1"
+
+    def test_citation_strips_leading_section_symbol_from_llm_output(self) -> None:
+        """LLM sometimes copies § from inline examples into the section field."""
+        c = Citation(filename="doc.pdf", section="§3.1", page=4)
+        assert c.section == "3.1"
+        assert "§§" not in c.format()
+        assert c.format() == "doc.pdf · §3.1 · page 4"
+
+    def test_no_citation_format_starts_with_double_section_symbol(self) -> None:
+        """Regression: structured citations must never produce §§."""
+        cases = ["§3.1", "§§3.1", "§Appendix A", "3.1"]
+        for raw in cases:
+            c = Citation(filename="f.pdf", section=raw)
+            assert not c.format().startswith("§§"), (
+                f"Double § in format() for section={raw!r}: {c.format()!r}"
+            )
