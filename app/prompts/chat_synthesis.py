@@ -5,16 +5,16 @@ from app.chat.retriever import RetrievedChunk
 _SINGLE_DOC_INSTRUCTIONS = """\
 - Answer ONLY from the provided context. Do not use prior knowledge.
 - Cite every factual claim inline: [filename · §section · page N].
-- In the structured citations list, set `section` to the bare number or heading \
-(e.g. "3.1", not "§3.1") — the § symbol is added automatically.
+- In the citations list, provide each citation as a plain string in the exact \
+format "filename · §section · page N" (omit " · page N" if the page is unknown).
 - If the context is insufficient to answer, set insufficient_context to true \
 and explain you couldn't find the information in the document."""
 
 _CROSS_DOC_INSTRUCTIONS = """\
 - Answer ONLY from the provided context. Do not use prior knowledge.
 - Cite every factual claim inline: [filename · §section · page N].
-- In the structured citations list, set `section` to the bare number or heading \
-(e.g. "3.1", not "§3.1") — the § symbol is added automatically.
+- In the citations list, provide each citation as a plain string in the exact \
+format "filename · §section · page N" (omit " · page N" if the page is unknown).
 - When answering comparative questions, attribute each claim to its source \
 document (V0 or V5) so the distinction is clear.
 - If the context is insufficient to answer, set insufficient_context to true \

@@ -64,6 +64,7 @@ def run_compare(client: httpx.Client, pdf: Path, docx: Path) -> None:
     result  = data["result"]
     summary = data["summary"]
     print(f"\n  match={len(result['match'])}  diff={len(result['diff'])}  missing={len(result['missing'])}")
+    print("  Wrote outputs/comparison.json and outputs/summary.json")
     print(f"\nTop change:")
     if summary["top_changes"]:
         top = summary["top_changes"][0]

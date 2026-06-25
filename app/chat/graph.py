@@ -1,14 +1,16 @@
 from __future__ import annotations
 
+import contextlib
 import logging
 from typing import Any, Literal
 
 from langgraph.graph import END, START, StateGraph
+from pydantic import BaseModel
 from typing_extensions import TypedDict
 
 from app.chat.retriever import RetrievedChunk, Retriever
 from app.config import RetrievalSettings
-from app.domain.chat import ChatAnswer
+from app.domain.chat import ChatAnswer, Citation
 from app.ports.embedder import EmbedderClient
 from app.ports.llm import LLMClient
 from app.prompts.chat_synthesis import build_cross_doc_prompt, build_single_doc_prompt
@@ -16,6 +18,29 @@ from app.prompts.chat_synthesis import build_cross_doc_prompt, build_single_doc_
 logger = logging.getLogger(__name__)
 
 _FALLBACK_TOP_K = 6
+
+
+# ── flat LLM output schema ────────────────────────────────────────────────────
+# ChatAnswer contains a nested Citation model with page: int | None, which
+# causes Gemini's structured-output JSON generation to emit truncated responses.
+# This flat schema has no nested models and no union types.
+
+class _SynthesisOutput(BaseModel):
+    answer: str
+    citations: list[str] = []  # formatted strings: "filename · §section · page N"
+    insufficient_context: bool = False
+
+
+def _parse_citation(s: str) -> Citation:
+    """Parse a formatted citation string back into a Citation object."""
+    parts = [p.strip() for p in s.split(" · ")]
+    filename = parts[0] if parts else s
+    section = parts[1].lstrip("§") if len(parts) > 1 else ""
+    page: int | None = None
+    if len(parts) > 2 and parts[2].startswith("page "):
+        with contextlib.suppress(ValueError):
+            page = int(parts[2].removeprefix("page "))
+    return Citation(filename=filename, section=section, page=page)
 
 
 # ── state ─────────────────────────────────────────────────────────────────────
@@ -123,9 +148,14 @@ class ChatPipeline:
 
         raw = await self._llm.generate(
             [{"role": "user", "content": prompt}],
-            response_schema=ChatAnswer,
+            response_schema=_SynthesisOutput,
         )
-        return {"answer": ChatAnswer.model_validate(raw)}
+        output = _SynthesisOutput.model_validate(raw)
+        return {"answer": ChatAnswer(
+            answer=output.answer,
+            citations=[_parse_citation(c) for c in output.citations],
+            insufficient_context=output.insufficient_context,
+        )}
 
     @staticmethod
     def _insufficient_response(_state: ChatState) -> dict[str, Any]:

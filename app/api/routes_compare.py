@@ -16,9 +16,18 @@ from app.parsing.pdf_parser import parse_pdf
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["compare"])
 
+_OUTPUTS = Path(__file__).resolve().parent.parent.parent / "outputs"
+
 # Module-level cache — populated by POST /compare, read by GET /summary.
 _cached_result: ComparisonResult | None = None
 _cached_summary: ExecutiveSummary | None = None
+
+
+def _write_outputs(result: ComparisonResult, summary: ExecutiveSummary) -> None:
+    _OUTPUTS.mkdir(exist_ok=True)
+    (_OUTPUTS / "comparison.json").write_text(result.model_dump_json(indent=2), encoding="utf-8")
+    (_OUTPUTS / "summary.json").write_text(summary.model_dump_json(indent=2), encoding="utf-8")
+    logger.info("Wrote outputs/comparison.json and outputs/summary.json")
 
 
 @router.post("/compare", response_model=CompareResponse)
@@ -42,6 +51,8 @@ async def compare(body: CompareRequest, pipeline: ComparisonPipelineDep) -> Comp
 
     _cached_result = result
     _cached_summary = summary
+
+    _write_outputs(result, summary)
 
     return CompareResponse(result=result, summary=summary)
 
