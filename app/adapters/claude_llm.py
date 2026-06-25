@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, cast
 
 import anthropic
 from anthropic import AsyncAnthropic
@@ -43,18 +43,19 @@ class ClaudeClient:
     )
     async def generate(
         self,
-        messages: list[MessageParam],
+        messages: list[dict[str, Any]],
         *,
         response_schema: type[BaseModel] | None = None,
         max_tokens: int = 4096,
     ) -> dict[str, Any]:
+        typed = cast(list[MessageParam], messages)
         if response_schema is not None:
-            return await self._generate_structured(messages, response_schema, max_tokens)
-        return await self._generate_unstructured(messages, max_tokens)
+            return await self._generate_structured(typed, response_schema, max_tokens)
+        return await self._generate_unstructured(typed, max_tokens)
 
     async def _generate_unstructured(
         self,
-        messages: list[MessageParam],
+        messages: list[dict[str, Any]],
         max_tokens: int,
     ) -> dict[str, Any]:
         response = await self._client.messages.create(
@@ -67,7 +68,7 @@ class ClaudeClient:
 
     async def _generate_structured(
         self,
-        messages: list[MessageParam],
+        messages: list[dict[str, Any]],
         response_schema: type[BaseModel],
         max_tokens: int,
     ) -> dict[str, Any]:

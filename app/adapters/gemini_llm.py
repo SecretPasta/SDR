@@ -36,7 +36,7 @@ class GeminiClient:
     )
     async def generate(
         self,
-        messages: list[dict[str, str]],
+        messages: list[dict[str, Any]],
         *,
         response_schema: type[BaseModel] | None = None,
         max_tokens: int = 4096,
@@ -68,7 +68,7 @@ class GeminiClient:
         return {"content": text}
 
 
-def _to_contents(messages: list[dict[str, str]]) -> list[types.Content]:
+def _to_contents(messages: list[dict[str, Any]]) -> list[types.Content]:
     _role = {"assistant": "model"}
     return [
         types.Content(
