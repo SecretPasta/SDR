@@ -73,3 +73,22 @@ class Retriever:
 
         pairs = await asyncio.gather(*[_query(did) for did in doc_ids])
         return {doc_id: chunks for doc_id, chunks in pairs}
+
+    async def retrieve_unfiltered(
+        self,
+        query: str,
+        top_k: int,
+    ) -> list[RetrievedChunk]:
+        """Single query across all documents — no doc_id filter."""
+        vector = await self._embedder.embed_query(query)
+        results = await self._store.query(vector, top_k=top_k)
+        return [
+            RetrievedChunk(
+                id=r["id"],
+                text=r["metadata"].get("display_text", ""),
+                display_text=r["metadata"].get("display_text", ""),
+                metadata=r["metadata"],
+                score=r["score"],
+            )
+            for r in results
+        ]
