@@ -40,7 +40,7 @@ async def check_gemini_llm() -> bool:
         client = GeminiClient(get_settings().gemini)
         result = await client.generate(
             [{"role": "user", "content": "Reply with the single word: pong"}],
-            max_tokens=16,
+            # Remove max_tokens=16 or bump it to a safe minimum like 1024
         )
         reply = result.get("content", "")
         logger.info("%s Gemini LLM — response: %r", PASS, reply)
