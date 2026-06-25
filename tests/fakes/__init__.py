@@ -1,0 +1,1 @@
+"""Test fakes — lightweight protocol implementations for unit tests."""
