@@ -13,10 +13,16 @@ class _SectionExplanation(BaseModel):
     section_id: str
     explanation: str
 
+    model_config = {"json_schema_extra": None}
+
 
 class _ExplainerOutput(BaseModel):
-    """Flat list schema — no unions, Gemini compatible."""
-    explanations: list[_SectionExplanation]
+    """Flat list schema — no unions, Gemini compatible.
+
+    explanations defaults to [] so Claude returning {} degrades gracefully
+    (each unmatched section falls back to the default explanation string).
+    """
+    explanations: list[_SectionExplanation] = []
 
 
 class MissingExplainer:
