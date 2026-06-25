@@ -26,10 +26,14 @@ uv run uvicorn app.main:app --reload
 ### Docker
 
 ```bash
-# 1. Build and start (reads .env automatically)
+# 1. Configure secrets (same as native — required before building)
+cp .env.example .env
+# Fill in ANTHROPIC_API_KEY, GEMINI_API_KEY, PINECONE_API_KEY
+
+# 2. Build the image and start the container
 docker compose up --build
 
-# 2. In a second terminal — run the containerized demo
+# 3. In a second terminal — run the containerized demo
 #    (passes /app/samples/* paths that exist inside the container)
 python scripts/containerized_demo.py
 ```
