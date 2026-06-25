@@ -5,6 +5,14 @@ from typing import Any
 
 import anthropic
 from anthropic import AsyncAnthropic
+from anthropic.types import (
+    MessageParam,
+    TextBlock,
+    ToolChoiceToolParam,
+    ToolParam,
+    ToolUseBlock,
+)
+from pydantic import BaseModel
 from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
 from app.config import AnthropicSettings
@@ -35,9 +43,9 @@ class ClaudeClient:
     )
     async def generate(
         self,
-        messages: list[dict[str, str]],
+        messages: list[MessageParam],
         *,
-        response_schema: type | None = None,
+        response_schema: type[BaseModel] | None = None,
         max_tokens: int = 4096,
     ) -> dict[str, Any]:
         if response_schema is not None:
@@ -46,7 +54,7 @@ class ClaudeClient:
 
     async def _generate_unstructured(
         self,
-        messages: list[dict[str, str]],
+        messages: list[MessageParam],
         max_tokens: int,
     ) -> dict[str, Any]:
         response = await self._client.messages.create(
@@ -54,28 +62,30 @@ class ClaudeClient:
             max_tokens=max_tokens,
             messages=messages,
         )
-        return {"content": response.content[0].text}
+        text_block = next(b for b in response.content if isinstance(b, TextBlock))
+        return {"content": text_block.text}
 
     async def _generate_structured(
         self,
-        messages: list[dict[str, str]],
-        response_schema: type,
+        messages: list[MessageParam],
+        response_schema: type[BaseModel],
         max_tokens: int,
     ) -> dict[str, Any]:
         tool_name = response_schema.__name__
-        tool_def = {
+        tool: ToolParam = {
             "name": tool_name,
             "description": f"Respond using the {tool_name} schema.",
-            "input_schema": response_schema.model_json_schema(),
+            "input_schema": response_schema.model_json_schema(),  # type: ignore[typeddict-item]
         }
+        tool_choice: ToolChoiceToolParam = {"type": "tool", "name": tool_name}
         response = await self._client.messages.create(
             model=self._model,
             max_tokens=max_tokens,
             messages=messages,
-            tools=[tool_def],
-            tool_choice={"type": "tool", "name": tool_name},
+            tools=[tool],
+            tool_choice=tool_choice,
         )
         for block in response.content:
-            if block.type == "tool_use" and block.name == tool_name:
+            if isinstance(block, ToolUseBlock) and block.name == tool_name:
                 return block.input  # type: ignore[return-value]
         raise ValueError(f"Anthropic returned no tool_use block for '{tool_name}'")
