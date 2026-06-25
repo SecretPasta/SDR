@@ -3,11 +3,11 @@
 AI-powered system comparing two versions of a Functional Design Specification (PDF vs DOCX). Detects MATCH / DIFF / MISSING sections, answers questions about each doc, and answers cross-document comparative questions. Take-home for an AI Engineer role.
 
 ## Stack
-- Python 3.11, FastAPI, Pydantic v2, Pydantic Settings
+- Python 3.13, FastAPI, Pydantic v2, Pydantic Settings
 - LangGraph for orchestration
 - Pinecone serverless (vector DB, mandated)
 - Claude Sonnet 4.6 (Anthropic API) — comparison judging, missing-explainer, top-10 ranker
-- Gemini 2.5/3 Flash (AI Studio) — chat synthesis only
+- Gemini 2.5/3.5 Flash (AI Studio) — chat synthesis only
 - gemini-embedding-001 — all embeddings (768d via Matryoshka)
 - pymupdf (PDF), python-docx (DOCX)
 
